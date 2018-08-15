@@ -1,0 +1,39 @@
+sudo: required
+
+dist: trusty
+
+language: cpp
+
+notifications:
+  email:
+    recipients:
+      - martinls@met.no
+
+    on_success: change
+    on_failure: always
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq lcov curl libboost-filesystem-dev
+    libboost-system-dev libboost-thread-dev libboost-program-options-dev
+    libboost-test-dev ocl-icd-libopencl1 opencl-headers libnetcdf-dev
+    libhwloc-dev libltdl-dev pkg-config libedit-dev
+    google-perftools 
+  - wget https://github.com/pocl/pocl/archive/v1.1.tar.gz
+  - tar xzf v1.1.tar.gz && cd pocl-1.1
+  - cmake .
+  - sudo make -j2 && sudo make install
+  - cd ..
+
+script:
+  - export LD_PRELOAD="/usr/lib/libtcmalloc.so.4"
+  - export OCL_ICD_VENDORS=/usr/local/etc/OpenCL/vendors/pocl.icd
+  - export COVERALLS_SERVICE_NAME=travis-ci
+  - export COVERALLS_REPO_TOKEN=omOcslvkHbLmwOms1aO7uacdqpshxp3Rz
+  - mkdir build
+  - cd build
+  - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
+  - make
+  - export KERNELDIR=../../sim/src/kernels/
+  - make coveralls
+
